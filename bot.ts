@@ -1,6 +1,6 @@
 import { Bot, InlineKeyboard } from 'grammy';
-import { saveBudget } from './db';
-import dotenv from 'dotenv';
+import { saveBudget, getUserBudget } from './db';
+import * as dotenv from 'dotenv';
 dotenv.config();
 
 const bot = new Bot(process.env.BOT_TOKEN!);
@@ -64,6 +64,26 @@ bot.command('alert', async (ctx) => {
   }
 });
 
+bot.command('info', async (ctx) => {
+  if (!ctx.from) return;
+  try {
+    const settings = await getUserBudget(ctx.from.id);
+    if (settings) {
+      await ctx.reply(
+        `📊 *Your Settings:*\n\n` +
+        `💰 Min Bet Size: $${parseInt(settings.budget_threshold).toLocaleString()}\n` +
+        `💧 Min Liquidity: ${settings.liquidity_threshold}%`,
+        { parse_mode: 'Markdown' }
+      );
+    } else {
+      await ctx.reply('⚠️ You haven\'t set any alerts yet. Use /start to get started.');
+    }
+  } catch (error) {
+    console.error('Error fetching settings:', error);
+    await ctx.reply('❌ An error occurred while fetching your settings.');
+  }
+});
+
 // Handle button clicks
 bot.callbackQuery(/set_(\d+)/, async (ctx) => {
   if (!ctx.match) return;
@@ -81,5 +101,9 @@ bot.callbackQuery('set_custom', async (ctx) => {
   await ctx.reply('To set a custom alert, please use the /alert command.\n\nExample: /alert 5000');
 });
 
-bot.start();
+// Check if this module is being run directly
+// @ts-ignore
+if (require.main === module) {
+  bot.start();
+}
 export default bot;

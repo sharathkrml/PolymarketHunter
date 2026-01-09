@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  bot:
+    build: .
+    command: npx ts-node bot.ts
+    environment:
+      - DATABASE_URL
+      - BOT_TOKEN
+    volumes:
+      - .:/app
+      - /app/node_modules
+    restart: unless-stopped
+    # Allow access to host services if needed (e.g. local DB)
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  monitor:
+    build: .
+    command: npx ts-node monitor.ts
+    environment:
+      - DATABASE_URL
+      - BOT_TOKEN
+    depends_on:
+      - bot
+    volumes:
+      - .:/app
+      - /app/node_modules
+    restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

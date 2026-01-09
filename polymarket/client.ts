@@ -1,4 +1,4 @@
-import WebSocket from "isomorphic-ws";
+import WebSocket = require("isomorphic-ws");
 import { type MessageEvent, type CloseEvent, type ErrorEvent } from "ws";
 import { type SubscriptionMessage, type Message, ConnectionStatus } from "./model";
 
