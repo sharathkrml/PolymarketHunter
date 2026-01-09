@@ -3,7 +3,7 @@ version: '3.8'
 services:
   bot:
     build: .
-    command: npx ts-node bot.ts
+    command: node dist/bot.js
     environment:
       - DATABASE_URL
       - BOT_TOKEN
@@ -17,7 +17,7 @@ services:
 
   monitor:
     build: .
-    command: npx ts-node monitor.ts
+    command: node dist/monitor.js
     environment:
       - DATABASE_URL
       - BOT_TOKEN
