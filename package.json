@@ -1,0 +1,25 @@
+{
+  "name": "polymarkethunterv2",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "@types/pg": "^8.16.0",
+    "@types/ws": "^8.18.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "dotenv": "^17.2.3",
+    "grammy": "^1.39.2",
+    "isomorphic-ws": "^5.0.0",
+    "pg": "^8.16.3",
+    "ws": "^8.19.0"
+  }
+}
