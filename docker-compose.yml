@@ -7,11 +7,8 @@ services:
     environment:
       - DATABASE_URL
       - BOT_TOKEN
-    volumes:
-      - .:/app
-      - /app/node_modules
+    # In production, don't mount local volumes—let Docker use its own built files
     restart: unless-stopped
-    # Allow access to host services if needed (e.g. local DB)
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
@@ -23,9 +20,7 @@ services:
       - BOT_TOKEN
     depends_on:
       - bot
-    volumes:
-      - .:/app
-      - /app/node_modules
+    # In production, don't mount local volumes—let Docker use its own built files
     restart: unless-stopped
     extra_hosts:
       - "host.docker.internal:host-gateway"
