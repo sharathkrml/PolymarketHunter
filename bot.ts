@@ -29,7 +29,7 @@ bot.command("start", async (ctx) => {
       "/set_liquidity_threshold <amount> — set liquidity threshold (e.g. `/set_liquidity_threshold 10`)",
       "/set_max_markets_traded <amount> — set max markets traded (e.g. `/set_max_markets_traded 8`)",
       "/info — show your current settings",
-      "/help — show usage instructions"
+      "/help — show usage instructions",
     ].join("\n"),
     { reply_markup: keyboard, parse_mode: "Markdown" }
   )
@@ -103,13 +103,13 @@ bot.command("set_max_markets_traded", async (ctx) => {
   )
 })
 
-bot.command("set_trade_threshold", async (ctx) => {
+bot.command("set_min_bet_size", async (ctx) => {
   const text = ctx.match
   if (!text || typeof text !== "string" || !text.trim()) {
     return ctx.reply(
       [
-        "⚠️ Usage: `/set_trade_threshold <amount>`",
-        "_Example_: `/set_trade_threshold 5000`",
+        "⚠️ Usage: `/set_min_bet_size <amount>`",
+        "_Example_: `/set_min_bet_size 5000`",
       ].join("\n"),
       { parse_mode: "Markdown" }
     )
@@ -131,16 +131,18 @@ bot.command("info", async (ctx) => {
       let lines = [
         "*Your Polymarket Alert Settings:*",
         "",
-        `• Min Bet Size: *$${parseInt(settings.budget_threshold).toLocaleString()}*`,
+        `• Min Bet Size: *$${parseInt(
+          settings.budget_threshold
+        ).toLocaleString()}*`,
         `• Min Liquidity: *${settings.liquidity_threshold}%*`,
-        `• Max Markets Traded: *${settings.max_markets_traded}*`
+        `• Max Markets Traded: *${settings.max_markets_traded}*`,
       ]
       await ctx.reply(lines.join("\n"), { parse_mode: "Markdown" })
     } else {
       await ctx.reply(
         [
           "⚠️ No alerts configured.",
-          "Use /start or the setup commands to begin."
+          "Use /start or the setup commands to begin.",
         ].join("\n")
       )
     }
@@ -153,8 +155,14 @@ bot.command("info", async (ctx) => {
 bot.api.setMyCommands([
   { command: "start", description: "Start the bot" },
   { command: "help", description: "Show help" },
-  { command: "set_trade_threshold", description: "Set the trade ($) threshold" },
-  { command: "set_liquidity_threshold", description: "Set liquidity (%) threshold" },
+  {
+    command: "set_trade_threshold",
+    description: "Set the trade ($) threshold",
+  },
+  {
+    command: "set_liquidity_threshold",
+    description: "Set liquidity (%) threshold",
+  },
   { command: "set_max_markets_traded", description: "Set max markets traded" },
   { command: "info", description: "Show your alert settings" },
 ])
