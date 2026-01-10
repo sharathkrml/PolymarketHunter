@@ -89,6 +89,7 @@ bot.command("set_max_markets_traded", async (ctx) => {
       [
         "⚠️ Usage: `/set_max_markets_traded <number>`",
         "_Example_: `/set_max_markets_traded 10`",
+        "If you set this to 0, you will be alerted for all trades.",
       ].join("\n"),
       { parse_mode: "Markdown" }
     )
