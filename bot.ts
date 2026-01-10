@@ -75,7 +75,12 @@ bot.command("set_liquidity_threshold", async (ctx) => {
   }
   const amount = parseInt(text.trim())
   if (!ctx.from) return
-  await updateLiquidityThreshold(ctx.from.id, amount)
+  const result = await updateLiquidityThreshold(ctx.from.id, amount)
+  if (result.rowCount === 0) {
+    return ctx.reply(
+      "❌ Error: could not update your settings. Please try again."
+    )
+  }
   await ctx.reply(
     `✅ Liquidity threshold updated.\n\nYou will get alerts for markets with at least *${amount}%* liquidity.`,
     { parse_mode: "Markdown" }
@@ -96,7 +101,12 @@ bot.command("set_max_markets_traded", async (ctx) => {
   }
   const amount = parseInt(text.trim())
   if (!ctx.from) return
-  await updateMaxMarketsTraded(ctx.from.id, amount)
+  const result = await updateMaxMarketsTraded(ctx.from.id, amount)
+  if (result.rowCount === 0) {
+    return ctx.reply(
+      "❌ Error: could not update your settings. Please try again."
+    )
+  }
   await ctx.reply(
     `✅ Max markets traded updated.\n\nYou will only be alerted if a trader has traded *${amount}* or fewer markets.`,
     { parse_mode: "Markdown" }
@@ -119,7 +129,12 @@ bot.command("set_min_bet_size", async (ctx) => {
     return ctx.reply("⚠️ Minimum bet size is 1000.", { parse_mode: "Markdown" })
   }
   if (!ctx.from) return
-  await updateTradeThreshold(ctx.from.id, amount)
+  const result = await updateTradeThreshold(ctx.from.id, amount)
+  if (result.rowCount === 0) {
+    return ctx.reply(
+      "❌ Error: could not update your settings. Please try again."
+    )
+  }
   await ctx.reply(
     `✅ Trade threshold updated.\n\nYou will receive alerts for trades over *$${amount.toLocaleString()}*.`,
     { parse_mode: "Markdown" }

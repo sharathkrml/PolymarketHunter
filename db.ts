@@ -58,9 +58,9 @@ export const updateMaxMarketsTraded = async (
   maxMarketsTraded: number
 ) => {
   const query = `
-    UPDATE polymarket.user_budsets SET max_markets_traded = $2 WHERE user_id = $1;
+    UPDATE polymarket.user_budgets SET max_markets_traded = $2 WHERE user_id = $1;
   `
-  await pool.query(query, [userId, maxMarketsTraded])
+  return await pool.query(query, [userId, maxMarketsTraded])
 }
 
 export const updateLiquidityThreshold = async (
@@ -68,9 +68,9 @@ export const updateLiquidityThreshold = async (
   liquidityThreshold: number
 ) => {
   const query = `
-    UPDATE polymarket.user_budsets SET liquidity_threshold = $2 WHERE user_id = $1;
+    UPDATE polymarket.user_budgets SET liquidity_threshold = $2 WHERE user_id = $1;
   `
-  await pool.query(query, [userId, liquidityThreshold])
+  return await pool.query(query, [userId, liquidityThreshold])
 }
 
 export const updateTradeThreshold = async (
@@ -78,9 +78,9 @@ export const updateTradeThreshold = async (
   tradeThreshold: number
 ) => {
   const query = `
-    UPDATE polymarket.user_budsets SET budget_threshold = $2 WHERE user_id = $1;
+    UPDATE polymarket.user_budgets SET budget_threshold = $2 WHERE user_id = $1;
   `
-  await pool.query(query, [userId, tradeThreshold])
+  return await pool.query(query, [userId, tradeThreshold])
 }
 
 export const saveBudget = async (
@@ -93,7 +93,7 @@ export const saveBudget = async (
     VALUES ($1, $2, $3)
     ON CONFLICT (user_id) DO UPDATE SET budget_threshold = $2, liquidity_threshold = $3;
   `
-  await pool.query(query, [userId, budget, liquidityThreshold])
+  return await pool.query(query, [userId, budget, liquidityThreshold])
 }
 
 export const getUsersForTrade = async (
