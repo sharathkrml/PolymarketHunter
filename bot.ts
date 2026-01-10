@@ -25,7 +25,7 @@ bot.command("start", async (ctx) => {
       "",
       "Use buttons below *or* these commands:",
       "",
-      "/set_trade_threshold <amount> — set trade threshold (e.g. `/set_trade_threshold 5000`)",
+      "/set_min_bet_size <amount> — set trade threshold (e.g. `/set_min_bet_size 5000`)",
       "/set_liquidity_threshold <amount> — set liquidity threshold (e.g. `/set_liquidity_threshold 10`)",
       "/set_max_markets_traded <amount> — set max markets traded (e.g. `/set_max_markets_traded 8`)",
       "/info — show your current settings",
@@ -44,8 +44,8 @@ bot.command("help", async (ctx) => {
       "• Tap quick buttons or use commands below.",
       "",
       "*Trade threshold:*",
-      "Use `/set_trade_threshold <amount>` to set a minimum trade dollar amount.",
-      "_Example_: `/set_trade_threshold 5000`",
+      "Use `/set_min_bet_size <amount>` to set a minimum trade dollar amount.",
+      "_Example_: `/set_min_bet_size 5000`",
       "",
       "*Liquidity threshold:*",
       "Use `/set_liquidity_threshold <percent>` (minimum: 5)",
@@ -115,6 +115,9 @@ bot.command("set_min_bet_size", async (ctx) => {
     )
   }
   const amount = parseInt(text.trim())
+  if (amount < 1000) {
+    return ctx.reply("⚠️ Minimum bet size is 1000.", { parse_mode: "Markdown" })
+  }
   if (!ctx.from) return
   await updateTradeThreshold(ctx.from.id, amount)
   await ctx.reply(
@@ -156,7 +159,7 @@ bot.api.setMyCommands([
   { command: "start", description: "Start the bot" },
   { command: "help", description: "Show help" },
   {
-    command: "set_trade_threshold",
+    command: "set_min_bet_size",
     description: "Set the trade ($) threshold",
   },
   {
@@ -187,9 +190,9 @@ bot.callbackQuery("set_custom", async (ctx) => {
     [
       "To set a custom trade alert, use:",
       "",
-      "`/set_trade_threshold <amount>`",
+      "`/set_min_bet_size <amount>`",
       "",
-      "_Example_: `/set_trade_threshold 5000`",
+      "_Example_: `/set_min_bet_size 5000`",
     ].join("\n"),
     { parse_mode: "Markdown" }
   )
