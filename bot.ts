@@ -131,7 +131,8 @@ bot.command("info", async (ctx) => {
         "*Your Polymarket Alert Settings:*",
         "",
         `• Min Bet Size: *$${parseInt(settings.budget_threshold).toLocaleString()}*`,
-        `• Min Liquidity: *${settings.liquidity_threshold}%*`
+        `• Min Liquidity: *${settings.liquidity_threshold}%*`,
+        `• Max Markets Traded: *${settings.max_markets_traded}*`
       ]
       await ctx.reply(lines.join("\n"), { parse_mode: "Markdown" })
     } else {

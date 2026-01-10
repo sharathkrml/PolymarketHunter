@@ -112,7 +112,7 @@ export const getUsersForTrade = async (
 
 export const getUserBudget = async (userId: number) => {
   const res = await pool.query(
-    "SELECT budget_threshold, liquidity_threshold FROM polymarket.user_budgets WHERE user_id = $1",
+    "SELECT budget_threshold, liquidity_threshold, max_markets_traded FROM polymarket.user_budgets WHERE user_id = $1",
     [userId]
   )
   return res.rows[0]
