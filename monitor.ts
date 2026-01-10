@@ -23,14 +23,17 @@ const client = new RealTimeDataClient({
                const liquidityPercent = await getLiquidityPercentage(message.payload.asset, tradeValue)
                // Find users whose budget is lower than this trade
                const userIds = await getUsersForTrade(tradeValue, liquidityPercent);
-               for (const userId of userIds) {
+               for (const user of userIds) {
                     let userUrl = `https://polymarket.com/@${message.payload.name}`;
                     if (message.payload.name === "") {
                          userUrl = `https://polymarket.com/profile/${message.payload.proxyWallet}`;
                     }
                     const marketsTraded = await getMarketsTraded(message.payload.proxyWallet)
+                    if (user.max_markets_traded > 0 && marketsTraded.traded > user.max_markets_traded) {
+                         continue;
+                    }
                     await bot.api.sendMessage(
-                         userId,
+                         user.user_id,
                          `🚨 **Insider Alert!**
 
 🔥 **${message.payload.side}** **${message.payload.size.toFixed(2)}** shares of **${message.payload.outcome}** @ **$${message.payload.price.toFixed(2)}**

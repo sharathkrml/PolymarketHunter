@@ -1,5 +1,11 @@
 import { Bot, InlineKeyboard } from "grammy"
-import { saveBudget, getUserBudget } from "./db"
+import {
+  saveBudget,
+  getUserBudget,
+  updateMaxMarketsTraded,
+  updateLiquidityThreshold,
+  updateTradeThreshold,
+} from "./db"
 import * as dotenv from "dotenv"
 dotenv.config()
 
@@ -14,61 +20,106 @@ bot.command("start", async (ctx) => {
     .text("Custom", "set_custom")
 
   await ctx.reply(
-    "Welcome to Polymarket Hunter! 🎯\n\n" +
-      "Use the buttons below or commands to set your alert threshold.\n\n" +
-      "COMMANDS:\n" +
-      "/alert <amount> [liquidity] - Set alert (e.g. /alert 5000 10)\n" +
-      "/help - Show usage instructions",
-    { reply_markup: keyboard }
+    [
+      "🎯 Welcome to Polymarket Hunter!",
+      "",
+      "Use buttons below *or* these commands:",
+      "",
+      "/set_trade_threshold <amount> — set trade threshold (e.g. `/set_trade_threshold 5000`)",
+      "/set_liquidity_threshold <amount> — set liquidity threshold (e.g. `/set_liquidity_threshold 10`)",
+      "/set_max_markets_traded <amount> — set max markets traded (e.g. `/set_max_markets_traded 8`)",
+      "/info — show your current settings",
+      "/help — show usage instructions"
+    ].join("\n"),
+    { reply_markup: keyboard, parse_mode: "Markdown" }
   )
 })
 
 bot.command("help", async (ctx) => {
   await ctx.reply(
-    "🤖 *Polymarket Hunter Bot Help*\n\n" +
-      "*Setting Alerts:*\n" +
-      "• Use quick buttons for common thresholds.\n" +
-      "• Use `/alert <amount>` to set a custom dollar threshold.\n" +
-      "  Example: `/alert 5000` (Alerts for bets > $5000)\n\n" +
-      "*Advanced Usage:*\n" +
-      "• You can specify a liquidity % filter.\n" +
-      "  Usage: `/alert <amount> <liquidity>`\n" +
-      "  Example: `/alert 5000 10` (Bets > $5k or market liquidity > 10%)\n\n" +
-      "Default liquidity is 5% if not specified.",
+    [
+      "*Polymarket Hunter Bot Help*",
+      "",
+      "*Set Alerts:*",
+      "• Tap quick buttons or use commands below.",
+      "",
+      "*Trade threshold:*",
+      "Use `/set_trade_threshold <amount>` to set a minimum trade dollar amount.",
+      "_Example_: `/set_trade_threshold 5000`",
+      "",
+      "*Liquidity threshold:*",
+      "Use `/set_liquidity_threshold <percent>` (minimum: 5)",
+      "_Example_: `/set_liquidity_threshold 10`",
+      "",
+      "*Max markets traded:*",
+      "Use `/set_max_markets_traded <number>` to receive alerts only if the trader traded fewer markets.",
+      "_Example_: `/set_max_markets_traded 10`",
+      "",
+      "*Info:*",
+      "Use `/info` to check your settings.",
+    ].join("\n"),
     { parse_mode: "Markdown" }
   )
 })
 
-bot.command("alert", async (ctx) => {
-  const text = ctx.match // command args
+bot.command("set_liquidity_threshold", async (ctx) => {
+  const text = ctx.match
   if (!text || typeof text !== "string" || !text.trim()) {
     return ctx.reply(
-      "⚠️ detailed usage:\n/alert <amount> [liquidity]\nExample: /alert 5000 10"
+      [
+        "⚠️ Usage: `/set_liquidity_threshold <percent>`",
+        "_Example_: `/set_liquidity_threshold 10`",
+      ].join("\n"),
+      { parse_mode: "Markdown" }
     )
   }
+  const amount = parseInt(text.trim())
+  if (!ctx.from) return
+  await updateLiquidityThreshold(ctx.from.id, amount)
+  await ctx.reply(
+    `✅ Liquidity threshold updated.\n\nYou will get alerts for markets with at least *${amount}%* liquidity.`,
+    { parse_mode: "Markdown" }
+  )
+})
 
-  const parts = text.trim().split(/\s+/)
-  const amountStr = parts[0]
-  if (!amountStr) {
-    return ctx.reply("⚠️ Invalid amount.")
-  }
-
-  const amount = parseInt(amountStr.replace(/[^0-9]/g, ""))
-  let liquidity = 5
-
-  if (parts.length > 1 && parts[1]) {
-    const parsedLiq = parseFloat(parts[1])
-    if (!isNaN(parsedLiq)) liquidity = parsedLiq
-  }
-
-  if (!isNaN(amount)) {
-    await saveBudget(ctx.from?.id!, amount, liquidity)
-    await ctx.reply(
-      `✅ Threshold set to $${amount.toLocaleString()} with ${liquidity}% liquidity filter.`
+bot.command("set_max_markets_traded", async (ctx) => {
+  const text = ctx.match
+  if (!text || typeof text !== "string" || !text.trim()) {
+    return ctx.reply(
+      [
+        "⚠️ Usage: `/set_max_markets_traded <number>`",
+        "_Example_: `/set_max_markets_traded 10`",
+      ].join("\n"),
+      { parse_mode: "Markdown" }
     )
-  } else {
-    await ctx.reply("❌ Invalid amount. Please use a number like 5000.")
   }
+  const amount = parseInt(text.trim())
+  if (!ctx.from) return
+  await updateMaxMarketsTraded(ctx.from.id, amount)
+  await ctx.reply(
+    `✅ Max markets traded updated.\n\nYou will only be alerted if a trader has traded *${amount}* or fewer markets.`,
+    { parse_mode: "Markdown" }
+  )
+})
+
+bot.command("set_trade_threshold", async (ctx) => {
+  const text = ctx.match
+  if (!text || typeof text !== "string" || !text.trim()) {
+    return ctx.reply(
+      [
+        "⚠️ Usage: `/set_trade_threshold <amount>`",
+        "_Example_: `/set_trade_threshold 5000`",
+      ].join("\n"),
+      { parse_mode: "Markdown" }
+    )
+  }
+  const amount = parseInt(text.trim())
+  if (!ctx.from) return
+  await updateTradeThreshold(ctx.from.id, amount)
+  await ctx.reply(
+    `✅ Trade threshold updated.\n\nYou will receive alerts for trades over *$${amount.toLocaleString()}*.`,
+    { parse_mode: "Markdown" }
+  )
 })
 
 bot.command("info", async (ctx) => {
@@ -76,33 +127,36 @@ bot.command("info", async (ctx) => {
   try {
     const settings = await getUserBudget(ctx.from.id)
     if (settings) {
-      await ctx.reply(
-        `📊 *Your Settings:*\n\n` +
-          `💰 Min Bet Size: $${parseInt(
-            settings.budget_threshold
-          ).toLocaleString()}\n` +
-          `💧 Min Liquidity: ${settings.liquidity_threshold}%`,
-        { parse_mode: "Markdown" }
-      )
+      let lines = [
+        "*Your Polymarket Alert Settings:*",
+        "",
+        `• Min Bet Size: *$${parseInt(settings.budget_threshold).toLocaleString()}*`,
+        `• Min Liquidity: *${settings.liquidity_threshold}%*`
+      ]
+      await ctx.reply(lines.join("\n"), { parse_mode: "Markdown" })
     } else {
       await ctx.reply(
-        "⚠️ You haven't set any alerts yet. Use /start to get started."
+        [
+          "⚠️ No alerts configured.",
+          "Use /start or the setup commands to begin."
+        ].join("\n")
       )
     }
   } catch (error) {
     console.error("Error fetching settings:", error)
-    await ctx.reply("❌ An error occurred while fetching your settings.")
+    await ctx.reply("❌ Error: could not get your settings. Please try again.")
   }
 })
 
 bot.api.setMyCommands([
   { command: "start", description: "Start the bot" },
   { command: "help", description: "Show help" },
-  { command: "alert", description: "Set alert" },
-  { command: "info", description: "Show info" },
+  { command: "set_trade_threshold", description: "Set the trade ($) threshold" },
+  { command: "set_liquidity_threshold", description: "Set liquidity (%) threshold" },
+  { command: "set_max_markets_traded", description: "Set max markets traded" },
+  { command: "info", description: "Show your alert settings" },
 ])
 
-// Handle button clicks
 bot.callbackQuery(/set_(\d+)/, async (ctx) => {
   if (!ctx.match) return
   const matchStr = ctx.match[1]
@@ -111,7 +165,8 @@ bot.callbackQuery(/set_(\d+)/, async (ctx) => {
     await saveBudget(ctx.from.id, amount)
     await ctx.answerCallbackQuery()
     await ctx.editMessageText(
-      `✅ Alert set! You'll be notified for trades over $${amount.toLocaleString()}.`
+      `✅ Alert threshold set!\n\nYou'll be notified for trades over *$${amount.toLocaleString()}*.\n\nYou can further tweak thresholds with:\n• /set_liquidity_threshold\n• /set_max_markets_traded\nUse /help for more options.`,
+      { parse_mode: "Markdown" }
     )
   }
 })
@@ -119,7 +174,14 @@ bot.callbackQuery(/set_(\d+)/, async (ctx) => {
 bot.callbackQuery("set_custom", async (ctx) => {
   await ctx.answerCallbackQuery()
   await ctx.reply(
-    "To set a custom alert, please use the /alert command.\n\nExample: /alert 5000"
+    [
+      "To set a custom trade alert, use:",
+      "",
+      "`/set_trade_threshold <amount>`",
+      "",
+      "_Example_: `/set_trade_threshold 5000`",
+    ].join("\n"),
+    { parse_mode: "Markdown" }
   )
 })
 
