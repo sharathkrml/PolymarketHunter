@@ -12,6 +12,7 @@ dotenv.config()
 const bot = new Bot(process.env.BOT_TOKEN!)
 
 bot.command("start", async (ctx) => {
+
   const keyboard = new InlineKeyboard()
     .text("10k", "set_10000")
     .text("15k", "set_15000")
