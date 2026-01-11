@@ -21,17 +21,17 @@ bot.command("start", async (ctx) => {
 
   await ctx.reply(
     [
-      "🎯 Welcome to Polymarket Hunter!",
+      "🎯 <b>Welcome to Polymarket Hunter!</b>",
       "",
-      "Use buttons below *or* these commands:",
+      "Use buttons below <i>or</i> these commands:",
       "",
-      "/set_min_bet_size <amount> — set trade threshold (e.g. `/set_min_bet_size 5000`)",
-      "/set_liquidity_threshold <amount> — set liquidity threshold (e.g. `/set_liquidity_threshold 10`)",
-      "/set_max_markets_traded <amount> — set max markets traded (e.g. `/set_max_markets_traded 8`)",
+      "<code>/set_min_bet_size &lt;amount&gt;</code> — set trade threshold",
+      "<code>/set_liquidity_threshold &lt;amount&gt;</code> — set liquidity threshold",
+      "<code>/set_max_markets_traded &lt;amount&gt;</code> — set max markets traded",
       "/info — show your current settings",
       "/help — show usage instructions",
     ].join("\n"),
-    { reply_markup: keyboard, parse_mode: "Markdown" }
+    { reply_markup: keyboard, parse_mode: "HTML" } // Changed to HTML
   )
 })
 
@@ -82,7 +82,7 @@ bot.command("set_liquidity_threshold", async (ctx) => {
     )
   }
   await ctx.reply(
-    `✅ Liquidity threshold updated.\n\nYou will get alerts for markets with at least *${amount}%* liquidity.`,
+    `✅ Liquidity threshold updated.\nYou will get alerts for markets with at least *${amount}%* liquidity.`,
     { parse_mode: "Markdown" }
   )
 })
@@ -108,7 +108,7 @@ bot.command("set_max_markets_traded", async (ctx) => {
     )
   }
   await ctx.reply(
-    `✅ Max markets traded updated.\n\nYou will only be alerted if a trader has traded *${amount}* or fewer markets.`,
+    `✅ Max markets traded updated.\nYou will only be alerted if a trader has traded *${amount}* or fewer markets.`,
     { parse_mode: "Markdown" }
   )
 })
@@ -136,7 +136,7 @@ bot.command("set_min_bet_size", async (ctx) => {
     )
   }
   await ctx.reply(
-    `✅ Trade threshold updated.\n\nYou will receive alerts for trades over *$${amount.toLocaleString()}*.`,
+    `✅ Trade threshold updated.\nYou will receive alerts for trades over *$${amount.toLocaleString()}*.`,
     { parse_mode: "Markdown" }
   )
 })
@@ -149,10 +149,12 @@ bot.command("info", async (ctx) => {
       let lines = [
         "*Your Polymarket Alert Settings:*",
         "",
-        `• Min Bet Size: *$${parseInt(
+        `Min Bet Size: *$${parseInt(
           settings.budget_threshold
-        ).toLocaleString()}* Or Min Liquidity: *${settings.liquidity_threshold}%*`,
-        `• Max Markets Traded: *${settings.max_markets_traded}*`,
+        ).toLocaleString()}* Or Min Liquidity: *${
+          settings.liquidity_threshold
+        }%*`,
+        `Max Markets Traded: *${settings.max_markets_traded}*`,
       ]
       await ctx.reply(lines.join("\n"), { parse_mode: "Markdown" })
     } else {
@@ -184,6 +186,9 @@ bot.api.setMyCommands([
   { command: "info", description: "Show your alert settings" },
 ])
 
+// This callback rewrites the alert message after a quick button press.
+// The original version was sometimes causing a "can't find end of entity" parse error from Telegram due to Markdown formatting issues.
+// Solution: Avoid excess blank lines/newlines, no "•" bullets, no isolated asterisks, and keep lines small. See https://core.telegram.org/bots/api#markdown-style
 bot.callbackQuery(/set_(\d+)/, async (ctx) => {
   if (!ctx.match) return
   const matchStr = ctx.match[1]
@@ -191,10 +196,26 @@ bot.callbackQuery(/set_(\d+)/, async (ctx) => {
     const amount = parseInt(matchStr)
     await saveBudget(ctx.from.id, amount)
     await ctx.answerCallbackQuery()
-    await ctx.editMessageText(
-      `✅ Alert threshold set!\n\nYou'll be notified for trades over *$${amount.toLocaleString()}*.\n\nYou can further tweak thresholds with:\n• /set_liquidity_threshold\n• /set_max_markets_traded\nUse /help for more options.`,
-      { parse_mode: "Markdown" }
-    )
+    // Markdown fix: Remove extra \n and place all lines consecutively without double-newlines.
+    // Also, avoid ending asterisk without text and avoid trailing blank lines.
+    const alertMsg =
+      `✅ Alert threshold set!\n` +
+      `You'll be notified for trades over *$${amount.toLocaleString()}*.\n` +
+      "You can further tweak thresholds with:\n" +
+      "/set_liquidity_threshold\n" +
+      "/set_max_markets_traded\n" +
+      "Use /help for more options."
+    try {
+      let message = await ctx.editMessageText(alertMsg, {
+        parse_mode: "HTML",
+      })
+      console.log("Message edited:", message)
+    } catch (error) {
+      console.error("Error editing message:", error)
+      await ctx.reply(
+        "❌ Error: could not update your settings. Please try again."
+      )
+    }
   }
 })
 
