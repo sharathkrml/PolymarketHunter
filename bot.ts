@@ -38,9 +38,9 @@ const getMarketActivityText = (value: number | null): string => {
 // Helper function to get display text for bet amount
 const getBetAmountText = (value: number): string => {
   if (value === 999) return "$1,000"
+  if (value === 1999) return "$2,000"
+  if (value === 4999) return "$5,000"
   if (value === 9999) return "$10,000"
-  if (value === 49999) return "$50,000"
-  if (value === 99999) return "$100,000"
   return `$${value.toLocaleString()}`
 }
 
@@ -383,10 +383,10 @@ bot.callbackQuery(/^market_(5|20|50|100|any)$/, async (ctx) => {
 
     const keyboard = new InlineKeyboard()
       .text("$1,000", "bet_1000")
-      .text("$10,000", "bet_10000")
+      .text("$2,000", "bet_2000")
       .row()
-      .text("$50,000", "bet_50000")
-      .text("$100,000", "bet_100000")
+      .text("$5,000", "bet_5000")
+      .text("$10,000", "bet_10000")
       .row()
       .text("Custom", "bet_custom")
 
@@ -412,7 +412,7 @@ bot.callbackQuery(/^market_(5|20|50|100|any)$/, async (ctx) => {
 })
 
 // FLOW: Bet amount selected
-bot.callbackQuery(/^bet_(1000|10000|50000|100000|custom)$/, async (ctx) => {
+bot.callbackQuery(/^bet_(1000|2000|5000|10000|custom)$/, async (ctx) => {
   if (!ctx.from || !ctx.match || !ctx.match[1]) return
 
   try {
@@ -444,11 +444,11 @@ bot.callbackQuery(/^bet_(1000|10000|50000|100000|custom)$/, async (ctx) => {
     const betAmount =
       value === 1000
         ? 999
-        : value === 10000
-        ? 9999
-        : value === 50000
-        ? 49999
-        : 99999
+        : value === 2000
+        ? 1999
+        : value === 5000
+        ? 4999
+        : 9999
 
     state.betAmount = betAmount
     state.step = "liquidity"
@@ -573,10 +573,11 @@ bot.on("message:text", async (ctx) => {
       const text = ctx.message.text.trim()
       const amount = parseInt(text)
 
-      if (isNaN(amount) || amount < 1) {
+      if (isNaN(amount) || amount < 500) {
         await ctx.reply(
           "⚠️ <b>Invalid Amount</b>\n\n" +
-            "Please enter a valid number greater than 0.\n\n" +
+            "Please enter a valid number of at least $500.\n\n" +
+            "📝 <b>Example:</b> <code>500</code> (for $500)\n" +
             "📝 <b>Example:</b> <code>5000</code> (for $5,000)\n\n" +
             "Or use /reset to start over.",
           { parse_mode: "HTML" }
@@ -720,10 +721,10 @@ bot.callbackQuery("edit_bet", async (ctx) => {
 
     const keyboard = new InlineKeyboard()
       .text("$1,000", "bet_1000")
-      .text("$10,000", "bet_10000")
+      .text("$2,000", "bet_2000")
       .row()
-      .text("$50,000", "bet_50000")
-      .text("$100,000", "bet_100000")
+      .text("$5,000", "bet_5000")
+      .text("$10,000", "bet_10000")
       .row()
       .text("Custom", "bet_custom")
 
