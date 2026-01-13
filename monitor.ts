@@ -29,21 +29,26 @@ const client = new RealTimeDataClient({
                     if (user.max_markets_traded > 0 && marketsTraded.traded > user.max_markets_traded) {
                          continue;
                     }
+                    // Format wallet address (first 4 chars + last 2 chars)
+                    const walletAddress = message.payload.proxyWallet
+                    const shortWallet = `${walletAddress.slice(0, 4)}…${walletAddress.slice(-2)}`
+                    
+                    // Format action text
+                    const actionText = message.payload.side === "BUY" 
+                         ? `Bought ${message.payload.outcome}` 
+                         : `Sold ${message.payload.outcome}`
+
                     await bot.api.sendMessage(
                          user.user_id,
-                         `🚨 **Insider Alert!**
-
-🔥 **${message.payload.side}** **${message.payload.size.toFixed(2)}** shares of **${message.payload.outcome}** @ **$${message.payload.price.toFixed(2)}**
-
-📌 **Market**: ${message.payload.title}
-💰 **Value**: $${tradeValue.toFixed(2)}
-💧 **Liquidity By User**: ${liquidityPercent.toFixed(2)}%
-
-👤 **Trader**: [View Profile](${userUrl})
-📊 **History**: ${marketsTraded.traded} markets traded
-
-🔗 [View Event](https://polymarket.com/event/${message.payload.eventSlug})`,
-                         { parse_mode: "Markdown" }
+                         `New matching trade detected
+Wallet: ${shortWallet}
+Markets traded: ${marketsTraded.traded}
+Total capital: ${Math.round(tradeValue).toLocaleString()}
+Market: ${message.payload.title}
+Action: ${actionText}
+Size: ${message.payload.size.toFixed(2)}
+Price: ${message.payload.price.toFixed(2)}`,
+                         { parse_mode: "HTML" }
                     );
                }
           }

@@ -44,12 +44,27 @@ const updateQuery4 = `
 ALTER TABLE polymarket.user_budgets
 DROP COLUMN consider_markets_traded;
 `
+
+const updateQuery5 = `
+ALTER TABLE polymarket.user_budgets
+ADD COLUMN IF NOT EXISTS is_monitoring_active BOOLEAN DEFAULT TRUE;
+`
+
 const updateTable = async () => {
   try {
     await pool.query(updateQuery4)
     console.log("Table updated successfully")
   } catch (error) {
     console.error("Error updating table:", error)
+  }
+}
+
+const addMonitoringStatus = async () => {
+  try {
+    await pool.query(updateQuery5)
+    console.log("Monitoring status column added successfully")
+  } catch (error) {
+    console.error("Error adding monitoring status column:", error)
   }
 }
 
@@ -89,11 +104,54 @@ export const saveBudget = async (
   liquidityThreshold: number = 5
 ) => {
   const query = `
-    INSERT INTO polymarket.user_budgets (user_id, budget_threshold, liquidity_threshold)
-    VALUES ($1, $2, $3)
-    ON CONFLICT (user_id) DO UPDATE SET budget_threshold = $2, liquidity_threshold = $3;
+    INSERT INTO polymarket.user_budgets (user_id, budget_threshold, liquidity_threshold, is_monitoring_active)
+    VALUES ($1, $2, $3, TRUE)
+    ON CONFLICT (user_id) DO UPDATE SET budget_threshold = $2, liquidity_threshold = $3, is_monitoring_active = TRUE;
   `
   return await pool.query(query, [userId, budget, liquidityThreshold])
+}
+
+export const saveCompleteSettings = async (
+  userId: number,
+  budget: number,
+  liquidityThreshold: number,
+  maxMarketsTraded: number
+) => {
+  const query = `
+    INSERT INTO polymarket.user_budgets (user_id, budget_threshold, liquidity_threshold, max_markets_traded, is_monitoring_active)
+    VALUES ($1, $2, $3, $4, TRUE)
+    ON CONFLICT (user_id) DO UPDATE SET 
+      budget_threshold = $2, 
+      liquidity_threshold = $3, 
+      max_markets_traded = $4,
+      is_monitoring_active = TRUE;
+  `
+  return await pool.query(query, [
+    userId,
+    budget,
+    liquidityThreshold,
+    maxMarketsTraded,
+  ])
+}
+
+export const setMonitoringStatus = async (
+  userId: number,
+  isActive: boolean
+) => {
+  const query = `
+    UPDATE polymarket.user_budgets 
+    SET is_monitoring_active = $2 
+    WHERE user_id = $1;
+  `
+  return await pool.query(query, [userId, isActive])
+}
+
+export const isMonitoringActive = async (userId: number): Promise<boolean> => {
+  const res = await pool.query(
+    "SELECT is_monitoring_active FROM polymarket.user_budgets WHERE user_id = $1",
+    [userId]
+  )
+  return res.rows[0]?.is_monitoring_active ?? false
 }
 
 export const getUsersForTrade = async (
@@ -101,7 +159,7 @@ export const getUsersForTrade = async (
   liquidityThreshold: number = 5
 ) => {
   const res = await pool.query(
-    "SELECT user_id, max_markets_traded FROM polymarket.user_budgets WHERE budget_threshold <= $1 OR liquidity_threshold <= $2",
+    "SELECT user_id, max_markets_traded FROM polymarket.user_budgets WHERE (budget_threshold <= $1 OR liquidity_threshold <= $2) AND is_monitoring_active = TRUE",
     [amount, liquidityThreshold]
   )
   return res.rows.map((row) => ({
@@ -112,10 +170,12 @@ export const getUsersForTrade = async (
 
 export const getUserBudget = async (userId: number) => {
   const res = await pool.query(
-    "SELECT budget_threshold, liquidity_threshold, max_markets_traded FROM polymarket.user_budgets WHERE user_id = $1",
+    "SELECT budget_threshold, liquidity_threshold, max_markets_traded, is_monitoring_active FROM polymarket.user_budgets WHERE user_id = $1",
     [userId]
   )
   return res.rows[0]
 }
 
 export default pool
+
+// addMonitoringStatus()
