@@ -83,6 +83,8 @@ bot.command("start", async (ctx) => {
 bot.command("reset", async (ctx) => {
   if (!ctx.from) return
   try {
+    // Immediately stop monitoring to prevent new messages
+    await setMonitoringStatus(ctx.from.id, false)
     clearUserState(ctx.from.id)
 
     const keyboard = new InlineKeyboard().text("🚀 Set Up Alerts", "flow_start")
@@ -252,6 +254,9 @@ bot.command("info", async (ctx) => {
 bot.command("stop", async (ctx) => {
   if (!ctx.from) return
   try {
+    // Immediately stop monitoring to prevent new messages
+    await setMonitoringStatus(ctx.from.id, false)
+
     const keyboard = new InlineKeyboard()
       .text("⏸️ Yes, Pause Monitoring", "stop_monitoring")
       .row()
@@ -913,6 +918,8 @@ bot.callbackQuery("start_monitoring", async (ctx) => {
 bot.callbackQuery("reset_confirm", async (ctx) => {
   if (!ctx.from) return
   try {
+    // Immediately stop monitoring to prevent new messages
+    await setMonitoringStatus(ctx.from.id, false)
     clearUserState(ctx.from.id)
 
     const keyboard = new InlineKeyboard().text("🚀 Set Up Alerts", "flow_start")
