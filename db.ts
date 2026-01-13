@@ -159,12 +159,14 @@ export const getUsersForTrade = async (
   liquidityThreshold: number = 5
 ) => {
   const res = await pool.query(
-    "SELECT user_id, max_markets_traded FROM polymarket.user_budgets WHERE (budget_threshold <= $1 OR liquidity_threshold <= $2) AND is_monitoring_active = TRUE",
+    "SELECT user_id, max_markets_traded, budget_threshold, liquidity_threshold FROM polymarket.user_budgets WHERE (budget_threshold <= $1 OR liquidity_threshold <= $2) AND is_monitoring_active = TRUE",
     [amount, liquidityThreshold]
   )
   return res.rows.map((row) => ({
     user_id: row.user_id,
     max_markets_traded: row.max_markets_traded,
+    budget_threshold: parseFloat(row.budget_threshold),
+    liquidity_threshold: parseFloat(row.liquidity_threshold),
   }))
 }
 

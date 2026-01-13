@@ -135,6 +135,8 @@ bot.command("status", async (ctx) => {
           parseInt(settings.liquidity_threshold)
         )}</b>`,
         "",
+        "⚡ <b>Alert Logic:</b> You'll receive alerts when <b>either</b> the trade size <b>OR</b> liquidity threshold is met (or both).",
+        "",
         `📡 <b>Status:</b> ${
           monitoringActive
             ? "🟢 <b>Active</b> - Receiving alerts"
@@ -205,6 +207,8 @@ bot.command("info", async (ctx) => {
         `   • Min liquidity: <b>${getLiquidityText(
           parseInt(settings.liquidity_threshold)
         )}</b>`,
+        "",
+        "⚡ <b>Alert Logic:</b> You'll receive alerts when <b>either</b> the trade size <b>OR</b> liquidity threshold is met (or both).",
         "",
         `📡 <b>Status:</b> ${
           monitoringActive
@@ -536,6 +540,8 @@ bot.callbackQuery(/^liquidity_(5|10|custom)$/, async (ctx) => {
       `   • Min trade size: <b>${getBetAmountText(state.betAmount)}</b>`,
       `   • Min liquidity: <b>${getLiquidityText(state.liquidity)}</b>`,
       "",
+      "⚡ <b>Alert Logic:</b> You'll receive alerts when <b>either</b> the trade size <b>OR</b> liquidity threshold is met (or both).",
+      "",
       "Once activated, we'll monitor Polymarket 24/7 and send you alerts whenever a trade matches these criteria.",
     ].join("\n")
 
@@ -642,6 +648,8 @@ bot.on("message:text", async (ctx) => {
         )}</b>`,
         `   • Min trade size: <b>${getBetAmountText(state.betAmount)}</b>`,
         `   • Min liquidity: <b>${getLiquidityText(state.liquidity)}</b>`,
+        "",
+        "⚡ <b>Alert Logic:</b> You'll receive alerts when <b>either</b> the trade size <b>OR</b> liquidity threshold is met (or both).",
         "",
         "Once activated, we'll monitor Polymarket 24/7 and send you alerts whenever a trade matches these criteria.",
       ].join("\n")

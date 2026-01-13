@@ -21,7 +21,7 @@ const client = new RealTimeDataClient({
         message.payload.asset,
         tradeValue
       )
-      // Find users whose budget is lower than this trade
+      // Find users whose budget or liquidity threshold is met
       const userIds = await getUsersForTrade(tradeValue, liquidityPercent)
       for (const user of userIds) {
         let userUrl = `https://polymarket.com/profile/${message.payload.proxyWallet}`
@@ -34,6 +34,21 @@ const client = new RealTimeDataClient({
         ) {
           continue
         }
+
+        // Determine which condition(s) triggered the alert
+        const budgetMet = tradeValue >= user.budget_threshold
+        const liquidityMet = liquidityPercent >= user.liquidity_threshold
+
+        let triggerReason = ""
+        if (budgetMet && liquidityMet) {
+          triggerReason =
+            "✅ **Triggered by**: Trade size AND Liquidity threshold"
+        } else if (budgetMet) {
+          triggerReason = "✅ **Triggered by**: Trade size threshold"
+        } else if (liquidityMet) {
+          triggerReason = "✅ **Triggered by**: Liquidity threshold"
+        }
+
         await bot.api.sendMessage(
           user.user_id,
           `🚨 **Insider Alert!**
@@ -47,6 +62,8 @@ const client = new RealTimeDataClient({
 📌 **Market**: ${message.payload.title}
 💰 **Value**: $${tradeValue.toFixed(2)}
 💧 **Liquidity By User**: ${liquidityPercent.toFixed(2)}%
+
+${triggerReason}
 
 👤 **Trader**: [View Profile](${userUrl})
 📊 **History**: ${marketsTraded.traded} markets traded
