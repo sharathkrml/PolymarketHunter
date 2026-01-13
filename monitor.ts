@@ -1,6 +1,6 @@
 import { RealTimeDataClient } from "./polymarket/client"
 import { type Message } from "./polymarket/model"
-import { getUsersForTrade } from "./db"
+import { getUsersForTrade, markUserAsBlocked } from "./db"
 import { getLiquidityPercentage } from "./polymarket/utils"
 import { getMarketsTraded } from "./polymarket/api"
 import bot from "./bot"
@@ -49,15 +49,16 @@ const client = new RealTimeDataClient({
           triggerReason = "✅ **Triggered by**: Liquidity threshold"
         }
 
-        await bot.api.sendMessage(
-          user.user_id,
-          `🚨 **Insider Alert!**
+        try {
+          await bot.api.sendMessage(
+            user.user_id,
+            `🚨 **Insider Alert!**
 
 🔥 **${message.payload.side}** **${message.payload.size.toFixed(
-            2
-          )}** shares of **${
-            message.payload.outcome
-          }** @ **$${message.payload.price.toFixed(2)}**
+              2
+            )}** shares of **${
+              message.payload.outcome
+            }** @ **$${message.payload.price.toFixed(2)}**
 
 📌 **Market**: ${message.payload.title}
 💰 **Value**: $${tradeValue.toFixed(2)}
@@ -69,8 +70,26 @@ ${triggerReason}
 📊 **History**: ${marketsTraded.traded} markets traded
 
 🔗 [View Event](https://polymarket.com/event/${message.payload.eventSlug})`,
-          { parse_mode: "Markdown" }
-        )
+            { parse_mode: "Markdown" }
+          )
+        } catch (error: any) {
+          // Check if the error is a 403 (bot blocked by user)
+          if (
+            error?.error_code === 403 ||
+            error?.description?.includes("blocked")
+          ) {
+            console.log(
+              `User ${user.user_id} has blocked the bot. Marking as blocked.`
+            )
+            await markUserAsBlocked(user.user_id)
+          } else {
+            // Log other errors but don't mark as blocked
+            console.error(
+              `Error sending message to user ${user.user_id}:`,
+              error
+            )
+          }
+        }
       }
     }
   },

@@ -50,6 +50,11 @@ ALTER TABLE polymarket.user_budgets
 ADD COLUMN IF NOT EXISTS is_monitoring_active BOOLEAN DEFAULT TRUE;
 `
 
+const updateQuery6 = `
+ALTER TABLE polymarket.user_budgets
+ADD COLUMN IF NOT EXISTS is_blocked BOOLEAN DEFAULT FALSE;
+`
+
 const updateTable = async () => {
   try {
     await pool.query(updateQuery4)
@@ -65,6 +70,15 @@ const addMonitoringStatus = async () => {
     console.log("Monitoring status column added successfully")
   } catch (error) {
     console.error("Error adding monitoring status column:", error)
+  }
+}
+
+const addBlockedStatus = async () => {
+  try {
+    await pool.query(updateQuery6)
+    console.log("Blocked status column added successfully")
+  } catch (error) {
+    console.error("Error adding blocked status column:", error)
   }
 }
 
@@ -159,7 +173,7 @@ export const getUsersForTrade = async (
   liquidityThreshold: number = 5
 ) => {
   const res = await pool.query(
-    "SELECT user_id, max_markets_traded, budget_threshold, liquidity_threshold FROM polymarket.user_budgets WHERE (budget_threshold <= $1 OR liquidity_threshold <= $2) AND is_monitoring_active = TRUE",
+    "SELECT user_id, max_markets_traded, budget_threshold, liquidity_threshold FROM polymarket.user_budgets WHERE (budget_threshold <= $1 OR liquidity_threshold <= $2) AND is_monitoring_active = TRUE AND (is_blocked IS NULL OR is_blocked = FALSE)",
     [amount, liquidityThreshold]
   )
   return res.rows.map((row) => ({
@@ -178,6 +192,21 @@ export const getUserBudget = async (userId: number) => {
   return res.rows[0]
 }
 
+export const markUserAsBlocked = async (userId: number) => {
+  const query = `
+    UPDATE polymarket.user_budgets 
+    SET is_blocked = TRUE 
+    WHERE user_id = $1;
+  `
+  try {
+    await pool.query(query, [userId])
+    console.log(`User ${userId} marked as blocked`)
+  } catch (error) {
+    console.error(`Error marking user ${userId} as blocked:`, error)
+  }
+}
+
 export default pool
 
 // addMonitoringStatus()
+// addBlockedStatus()
