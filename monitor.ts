@@ -1,3 +1,4 @@
+import { InlineKeyboard } from "grammy"
 import { RealTimeDataClient } from "./polymarket/client"
 import { type Message } from "./polymarket/model"
 import { getUsersForTrade, markUserAsBlocked } from "./db"
@@ -50,28 +51,35 @@ const client = new RealTimeDataClient({
         }
 
         try {
-          await bot.api.sendMessage(
-            user.user_id,
-            `🚨 **Insider Alert!**
+          const eventUrl = `https://polymarket.com/event/${message.payload.eventSlug}`
+          const enciesTxUrl = `https://app.encies.com/tx/${message.payload.transactionHash}`
+          const shareText =
+            `🔥 Insider alert: ${message.payload.side === "BUY" ? "Bought" : "Sold"} ${message.payload.size.toFixed(0)} ${message.payload.outcome} @ $${message.payload.price.toFixed(2)}\n` +
+            `Market: ${message.payload.title}\n` +
+            `Value: $${tradeValue.toFixed(0)}\n` +
+            `Track & trade on Encies 👇`
+          const shareOnXUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(enciesTxUrl)}`
 
-🔥 **${message.payload.side}** **${message.payload.size.toFixed(
-              2
-            )}** shares of **${
-              message.payload.outcome
-            }** @ **$${message.payload.price.toFixed(2)}**
+          const keyboard = new InlineKeyboard()
+            .url("Trade on Encies", enciesTxUrl)
+            .row()
+            .url("Share on X", shareOnXUrl)
 
-📌 **Market**: ${message.payload.title}
-💰 **Value**: $${tradeValue.toFixed(2)}
-💧 **Liquidity By User**: ${liquidityPercent.toFixed(2)}%
+          const alertMessage =
+            `🚨 **Insider Alert!**\n\n` +
+            `🔥 **${message.payload.side}** **${message.payload.size.toFixed(2)}** shares of **${message.payload.outcome}** @ **$${message.payload.price.toFixed(2)}**\n\n` +
+            `📌 **Market**: ${message.payload.title}\n` +
+            `💰 **Value**: $${tradeValue.toFixed(2)}\n` +
+            `💧 **Liquidity By User**: ${liquidityPercent.toFixed(2)}%\n\n` +
+            `${triggerReason}\n\n` +
+            `👤 **Trader**: [View Profile](${userUrl})\n` +
+            `📊 **History**: ${marketsTraded.traded} markets traded\n\n` +
+            `🔗 [View Event](${eventUrl})`
 
-${triggerReason}
-
-👤 **Trader**: [View Profile](${userUrl})
-📊 **History**: ${marketsTraded.traded} markets traded
-
-🔗 [View Event](https://polymarket.com/event/${message.payload.eventSlug})`,
-            { parse_mode: "Markdown" }
-          )
+          await bot.api.sendMessage(user.user_id, alertMessage, {
+            parse_mode: "Markdown",
+            reply_markup: keyboard,
+          })
         } catch (error: any) {
           // Check if the error is a 403 (bot blocked by user)
           if (
