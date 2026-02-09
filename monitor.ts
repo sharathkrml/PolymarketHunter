@@ -46,11 +46,11 @@ const client = new RealTimeDataClient({
               message.payload.name ||
               message.payload.pseudonym ||
               message.payload.proxyWallet
-            } **${
+            } ${
               message.payload.side === "BUY" ? "Bought" : "Sold"
-            }** **${message.payload.size.toFixed(0)}** shares of **${
+            } ${message.payload.size.toFixed(0)} shares of ${
               message.payload.outcome
-            }** @ **$${message.payload.price.toFixed(2)}**\n` +
+            } @ $${message.payload.price.toFixed(2)}\n` +
             `Market: ${message.payload.title}\n` +
             `Value: $${tradeValue.toFixed(0)}\n` +
             `Track & trade on Encies 👇`
