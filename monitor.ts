@@ -42,11 +42,15 @@ const client = new RealTimeDataClient({
           const eventUrl = `https://polymarket.com/event/${message.payload.eventSlug}`
           const enciesTxUrl = `https://app.encies.com/tx/${message.payload.transactionHash}`
           const shareText =
-            `🔥 Insider alert: ${
+            `${
+              message.payload.name ||
+              message.payload.pseudonym ||
+              message.payload.proxyWallet
+            } **${
               message.payload.side === "BUY" ? "Bought" : "Sold"
-            } ${message.payload.size.toFixed(0)} ${
+            }** **${message.payload.size.toFixed(0)}** shares of **${
               message.payload.outcome
-            } @ $${message.payload.price.toFixed(2)}\n` +
+            }** @ **$${message.payload.price.toFixed(2)}**\n` +
             `Market: ${message.payload.title}\n` +
             `Value: $${tradeValue.toFixed(0)}\n` +
             `Track & trade on Encies 👇`
